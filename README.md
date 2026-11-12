@@ -24,7 +24,11 @@ Built with Next.js 14, Supabase (database and login) and Vercel (hosting and the
    insert into public.admins (user_id)
    select id from auth.users where email = 'you@example.com';
    ```
-6. Copy three values from **Settings › API**: the **Project URL**, the **anon public** key and the **service_role** key.
+6. Copy three values:
+   - **Project URL**: click **Connect** at the top of the project page, or go to **Project Settings › Data API**. It looks like `https://xxxx.supabase.co`.
+   - **Publishable key** (`sb_publishable_…`) from **Project Settings › API Keys**.
+   - **Secret key** (`sb_secret_…`) from the same page. Click to reveal or create one, and keep it private.
+   - Older projects can use the **anon** and **service_role** keys from the **Legacy API Keys** tab instead.
 
 ### 2. Vercel: hosting
 1. **Add New › Project** and import this GitHub repository. Leave the framework as Next.js.
@@ -33,8 +37,8 @@ Built with Next.js 14, Supabase (database and login) and Vercel (hosting and the
    | Name | Value |
    |---|---|
    | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public key |
-   | `SUPABASE_SERVICE_ROLE_KEY` | service_role key (secret) |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (`sb_publishable_…`) |
+   | `SUPABASE_SECRET_KEY` | Secret key (`sb_secret_…`) |
    | `CRON_SECRET` | any long random text, for example from a password generator |
    | `APP_URL` | `https://admin.serengetilabs.co.tz` |
 
@@ -68,4 +72,4 @@ npm run dev
 
 ## Security
 - Every table has row level security, and only users listed in `public.admins` can read or change anything.
-- The service_role key is used only by the daily job on the server. Never put it in a `NEXT_PUBLIC_` variable.
+- The secret key is used only by the daily job on the server. Never put it in a `NEXT_PUBLIC_` variable.
