@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { fmtDate, tzs, todayTZ, METHOD_LABEL } from '@/lib/format';
@@ -9,6 +10,7 @@ import { runBillingNow } from '../actions';
 export const dynamic = 'force-dynamic';
 
 export default async function Dashboard({ searchParams }: { searchParams: { billed?: string; reminded?: string } }) {
+  await requireAdmin();
   const supabase = createClient();
   const today = todayTZ();
   const monthStart = today.slice(0, 8) + '01';

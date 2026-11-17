@@ -6,6 +6,7 @@ The private admin where Serengeti Labs (G2K GROUP TANZANIA LIMITED) bills client
 - **Invoices**: numbered `SL-2026-0001`, amounts in TSh, optional 18% VAT, and a branded PDF with bank and mobile money details.
 - **Payments and balances**: record mobile money, bank, cash or online payments. Invoices move to part paid or paid on their own, and the dashboard shows outstanding and overdue amounts.
 - **Automatic monthly billing**: every day at 07:00 (Dar es Salaam time) the app creates that day's monthly invoices, one per client, with setup and training fees added to the first invoice. It then sends reminders 3 days before the due date, on the due date, and 3, 7, 14 and 30 days late.
+- **Sales team and prospects**: sales officers sign in with their own account and only see their own prospects. For each business they record the name, contact person, phone, location (with an optional GPS pin), the product pitched, the day visited, and every follow-up after that. You see everyone's prospects, follow-ups that are due or overdue, and a scorecard for each officer, and you can turn a won prospect into a billing client with one click.
 - **Messages**: a WhatsApp button on every invoice works with no setup. SMS (Africa's Talking) and email (Resend) start working once you add their keys.
 
 Built with Next.js 14, Supabase (database and login) and Vercel (hosting and the daily job).
@@ -53,6 +54,12 @@ The daily billing job in `vercel.json` turns on automatically after the first de
 3. **Clients**: add a client, then add a subscription. Prices fill in from the product and can be changed for that client.
 4. Click **Invoice setup now** to bill setup and training right away, or let the daily job do it. You can also click **Run billing now** on the dashboard at any time.
 
+### Sales team (added later)
+1. In Supabase **SQL Editor › New query**, paste everything from `supabase/migrations/0002_sales.sql` and click **Run**. You only do this once.
+2. In the app, open **Sales team** and add each sales officer with their name, phone, email and a starting password. Their account is created on the spot, and this needs `SUPABASE_SECRET_KEY` to be set in Vercel.
+3. Share the email and password with them. They sign in at the same address, for example `admin.serengetilabs.co.tz`, and land on **My prospects**. They can't see invoices, clients, payments or settings.
+4. If someone leaves, click **Turn off access**. Their prospects stay with you.
+
 ### Optional: SMS and email
 Add these in Vercel › Settings › Environment Variables, then redeploy:
 - **SMS ([Africa's Talking](https://africastalking.com))**: `AT_USERNAME`, `AT_API_KEY`, and `AT_SENDER_ID` if you have a registered sender name.
@@ -71,5 +78,6 @@ npm run dev
 ```
 
 ## Security
-- Every table has row level security, and only users listed in `public.admins` can read or change anything.
+- Every table has row level security. Only users listed in `public.admins` can read or change billing data.
+- Sales staff (listed in `public.sales_staff` and active) can only read, add and edit their own prospects and follow-ups, and read the product list. Only admins can delete prospects.
 - The secret key is used only by the daily job on the server. Never put it in a `NEXT_PUBLIC_` variable.

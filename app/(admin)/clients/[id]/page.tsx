@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -18,6 +19,7 @@ const SUB_BADGE: Record<string, string> = {
 };
 
 export default async function ClientPage({ params }: { params: { id: string } }) {
+  await requireAdmin();
   const supabase = createClient();
   const [{ data: client }, { data: subs }, { data: invoices }, { data: products }, { data: bal }] = await Promise.all([
     supabase.from('clients').select('*').eq('id', params.id).single(),

@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { fmtDate, tzs, todayTZ } from '@/lib/format';
@@ -16,6 +17,7 @@ const FILTERS = [
 ];
 
 export default async function InvoicesPage({ searchParams }: { searchParams: { filter?: string } }) {
+  await requireAdmin();
   const filter = searchParams.filter ?? 'all';
   const supabase = createClient();
   let q = supabase.from('invoices').select('*, clients(name)').order('issue_date', { ascending: false }).order('number', { ascending: false }).limit(300);

@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/PageHeader';
 import { SubmitButton } from '@/components/SubmitButton';
@@ -6,6 +7,7 @@ import { saveProduct } from '../../actions';
 export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage() {
+  await requireAdmin();
   const supabase = createClient();
   const { data: products } = await supabase.from('products').select('*').order('name');
   return (

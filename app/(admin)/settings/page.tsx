@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/PageHeader';
 import { SubmitButton } from '@/components/SubmitButton';
@@ -17,6 +18,7 @@ function Field({ name, label, value, hint, type = 'text' }: { name: string; labe
 }
 
 export default async function SettingsPage({ searchParams }: { searchParams: { saved?: string } }) {
+  await requireAdmin();
   const supabase = createClient();
   const { data: s } = await supabase.from('settings').select('*').eq('id', 1).single();
   const v = (k: string) => (s as any)?.[k];

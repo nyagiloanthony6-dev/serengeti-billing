@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -12,6 +13,7 @@ import type { Client, Invoice, Settings } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 export default async function InvoicePage({ params, searchParams }: { params: { id: string }; searchParams: { sent?: string } }) {
+  await requireAdmin();
   const supabase = createClient();
   const [{ data: inv }, { data: items }, { data: payments }, { data: settings }, { data: reminders }] = await Promise.all([
     supabase.from('invoices').select('*, clients(*)').eq('id', params.id).single(),

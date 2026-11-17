@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { addDays, todayTZ } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
@@ -6,6 +7,7 @@ import { InvoiceEditor } from './InvoiceEditor';
 export const dynamic = 'force-dynamic';
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: { client?: string } }) {
+  await requireAdmin();
   const supabase = createClient();
   const [{ data: clients }, { data: products }, { data: settings }] = await Promise.all([
     supabase.from('clients').select('id, name').eq('active', true).order('name'),

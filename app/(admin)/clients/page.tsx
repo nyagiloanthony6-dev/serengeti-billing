@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { tzs } from '@/lib/format';
@@ -7,6 +8,7 @@ import { ClientForm } from './ClientForm';
 export const dynamic = 'force-dynamic';
 
 export default async function ClientsPage() {
+  await requireAdmin();
   const supabase = createClient();
   const [{ data: clients }, { data: balances }, { data: subs }] = await Promise.all([
     supabase.from('clients').select('*').order('name'),
