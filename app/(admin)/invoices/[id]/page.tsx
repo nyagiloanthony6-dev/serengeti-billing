@@ -32,6 +32,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
   return (
     <>
       <PageHeader kicker={<span className="inline-flex items-center gap-2">Invoice · <StatusBadge status={inv.status} due={inv.due_date} /></span>} title={inv.number}>
+        {(inv.status === 'draft' || open) && <Link href={`/invoices/${inv.id}/edit`} className="btn-secondary">Edit invoice</Link>}
         <a href={`/api/invoices/${inv.id}/pdf`} className="btn-secondary" target="_blank" rel="noopener">Download PDF</a>
         {inv.status !== 'void' && <a href={wa} className="btn-secondary" target="_blank" rel="noopener">Send on WhatsApp</a>}
         {inv.status === 'draft' && (

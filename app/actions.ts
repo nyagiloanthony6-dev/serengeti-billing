@@ -162,6 +162,49 @@ export async function createInvoice(form: FormData) {
   redirect(`/invoices/${inv.id}`);
 }
 
+/** Change an invoice that is not fully paid yet: dates, VAT, notes and lines. */
+export async function updateInvoice(form: FormData) {
+  const supabase = await db();
+  const id = str(form, 'id');
+  const items = JSON.parse(str(form, 'items') || '[]') as (ItemInput & { subscription_id?: string | null })[];
+  const clean = items.filter((i) => i.description.trim() && Number(i.quantity) > 0);
+  if (!clean.length) throw new Error('Add at least one line');
+  const { data: inv } = await supabase.from('invoices').select('status').eq('id', id).single();
+  if (!inv) throw new Error('Invoice not found');
+  if (!['draft', 'sent', 'partially_paid'].includes(inv.status)) throw new Error('Paid or void invoices cannot be edited');
+
+  const today = todayTZ();
+  const status = inv.status === 'draft' && str(form, 'intent') === 'send' ? 'sent' : inv.status;
+  const { error } = await supabase.from('invoices').update({
+    issue_date: str(form, 'issue_date') || today,
+    due_date: str(form, 'due_date') || addDays(today, 7),
+    vat_rate: num(form, 'vat_rate'),
+    notes: str(form, 'notes'),
+    status,
+  }).eq('id', id);
+  if (error) throw new Error(error.message);
+
+  const { error: delErr } = await supabase.from('invoice_items').delete().eq('invoice_id', id);
+  if (delErr) throw new Error(delErr.message);
+  const { error: itemErr } = await supabase.from('invoice_items').insert(
+    clean.map((i, idx) => ({
+      invoice_id: id,
+      subscription_id: i.subscription_id || null,
+      description: i.description.trim(),
+      quantity: Number(i.quantity),
+      unit_price: Number(i.unit_price),
+      kind: ['setup', 'training', 'monthly'].includes(i.kind ?? '') ? i.kind : 'other',
+      sort: idx,
+    }))
+  );
+  if (itemErr) throw new Error(itemErr.message);
+  await supabase.rpc('recalc_invoice', { p_invoice: id });
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath('/invoices');
+  revalidatePath('/');
+  redirect(`/invoices/${id}`);
+}
+
 export async function setInvoiceStatus(form: FormData) {
   const supabase = await db();
   const id = str(form, 'id');
