@@ -10,7 +10,7 @@ import { deleteProspect } from '../../sales-actions';
 
 export const dynamic = 'force-dynamic';
 
-type SP = { status?: string; staff?: string; q?: string; view?: string };
+type SP = { status?: string; staff?: string; q?: string; view?: string; product?: string };
 
 export default async function ProspectsPage({ searchParams }: { searchParams: SP }) {
   const s = await requireStaff();
@@ -21,6 +21,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
 
   let q = supabase.from('prospects').select('*, sales_staff(full_name)').order('updated_at', { ascending: false }).limit(500);
   if (searchParams.status) q = q.eq('status', searchParams.status);
+  if (searchParams.product) q = q.contains('products', [searchParams.product]);
   if (isAdmin && searchParams.staff) q = q.eq('sales_user_id', searchParams.staff);
   if (searchParams.q) {
     const t = searchParams.q.replace(/[%,()]/g, ' ');
@@ -28,14 +29,16 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
   }
   if (searchParams.view === 'due') q = q.lte('next_followup', today).not('status', 'in', '(won,lost)');
 
-  const [{ data: rows }, { data: all }, { data: staff }] = await Promise.all([
+  const [{ data: rows }, { data: all }, { data: staff }, { data: products }] = await Promise.all([
     q,
     (() => {
       let a = supabase.from('prospects').select('status, visited_on, next_followup, sales_user_id');
       if (isAdmin && searchParams.staff) a = a.eq('sales_user_id', searchParams.staff);
+      if (searchParams.product) a = a.contains('products', [searchParams.product]);
       return a;
     })(),
     isAdmin ? supabase.from('sales_staff').select('user_id, full_name').order('full_name') : Promise.resolve({ data: null }),
+    supabase.from('products').select('name').order('name'),
   ]);
 
   const list = all ?? [];
@@ -76,7 +79,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
         })}
       </div>
 
-      <form className="card mb-4 grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:items-end">
+      <form className="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:items-end">
         <label className="label" htmlFor="pq">Search
           <input id="pq" name="q" defaultValue={searchParams.q ?? ''} placeholder="Name, phone or location" className="input" />
         </label>
@@ -84,6 +87,12 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
           <select id="pstatus" name="status" defaultValue={searchParams.status ?? ''} className="input">
             <option value="">All</option>
             {STATUS_ORDER.map((k) => <option key={k} value={k}>{PROSPECT_STATUS[k].label}</option>)}
+          </select>
+        </label>
+        <label className="label" htmlFor="pproduct">Product
+          <select id="pproduct" name="product" defaultValue={searchParams.product ?? ''} className="input">
+            <option value="">All products</option>
+            {(products ?? []).map((x: any) => <option key={x.name} value={x.name}>{x.name}</option>)}
           </select>
         </label>
         {isAdmin && (
@@ -97,7 +106,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
         {searchParams.view && <input type="hidden" name="view" value={searchParams.view} />}
         <div className="flex gap-2">
           <button className="btn-secondary">Filter</button>
-          {(searchParams.q || searchParams.status || searchParams.staff || searchParams.view) && <Link href="/prospects" className="btn-secondary">Clear</Link>}
+          {(searchParams.q || searchParams.status || searchParams.staff || searchParams.view || searchParams.product) && <Link href="/prospects" className="btn-secondary">Clear</Link>}
         </div>
       </form>
 
@@ -125,7 +134,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
                 {(p.products ?? []).length > 0 && (
-                  <span className="flex flex-wrap gap-1">{p.products.map((n: string) => <span key={n} className="rounded-full bg-sunk px-2 py-0.5 font-medium">{n}</span>)}</span>
+                  <span className="flex flex-wrap gap-1">{p.products.map((n: string) => <Link key={n} href={qs({ product: n })} className={`rounded-full px-2 py-0.5 font-medium ${searchParams.product === n ? 'bg-indigo text-white' : 'bg-sunk hover:bg-indigo-soft hover:text-indigo'}`}>{n}</Link>)}</span>
                 )}
                 <span className="text-muted">Visited <span className="font-medium text-ink">{fmtDate(p.visited_on)}</span></span>
                 <span className="text-muted">Follow-up <FollowupDate date={p.next_followup} today={today} closed={!open(p)} /></span>
@@ -151,7 +160,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
         })}
         {!rows?.length && (
           <li className="card px-4 py-12 text-center text-sm text-muted">
-            {searchParams.q || searchParams.status || searchParams.view ? 'No prospects match these filters.' : 'No prospects yet. Add the first business you visited.'}
+            {searchParams.q || searchParams.status || searchParams.view || searchParams.product ? 'No prospects match these filters.' : 'No prospects yet. Add the first business you visited.'}
           </li>
         )}
       </ul>
