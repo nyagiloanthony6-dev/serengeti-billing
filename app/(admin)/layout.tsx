@@ -6,8 +6,8 @@ import { getSession } from '@/lib/auth';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, role, name } = await getSession();
-  const display = role === 'sales' ? name : 'Tonny';
-  const initials = (display || user?.email || '?').split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
+  const display: string = role === 'sales' ? name : 'Tonny';
+  const initials = (display || user?.email || '?').split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]!.toUpperCase()).join('');
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[256px_minmax(0,1fr)]">
       <aside className="relative overflow-hidden bg-[#15183A] px-4 pb-3 pt-4 text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:px-5 lg:py-6">
