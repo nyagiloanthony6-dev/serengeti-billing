@@ -5,6 +5,8 @@ import { fmtDate, todayTZ } from '@/lib/format';
 import { PROSPECT_STATUS, STATUS_ORDER, intlPhone } from '@/lib/prospects';
 import { PageHeader } from '@/components/PageHeader';
 import { ProspectBadge, FollowupDate } from '@/components/ProspectBadge';
+import { SubmitButton } from '@/components/SubmitButton';
+import { deleteProspect } from '../../sales-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,12 +130,21 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
                 <span className="text-muted">Visited <span className="font-medium text-ink">{fmtDate(p.visited_on)}</span></span>
                 <span className="text-muted">Follow-up <FollowupDate date={p.next_followup} today={today} closed={!open(p)} /></span>
                 {isAdmin && <span className="text-muted">By <span className="font-medium text-ink">{p.sales_staff?.full_name ?? '—'}</span></span>}
-                {tel && (
-                  <span className="ml-auto flex gap-2">
-                    <a href={`tel:+${tel}`} className="btn-secondary min-h-[32px] px-3 py-1 text-xs">Call</a>
-                    <a href={`https://wa.me/${tel}`} target="_blank" rel="noopener noreferrer" className="btn-secondary min-h-[32px] px-3 py-1 text-xs">WhatsApp</a>
-                  </span>
-                )}
+                <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                  {tel && <a href={`tel:+${tel}`} className="btn-secondary min-h-[32px] px-3 py-1 text-xs">Call</a>}
+                  {tel && <a href={`https://wa.me/${tel}`} target="_blank" rel="noopener noreferrer" className="btn-secondary min-h-[32px] px-3 py-1 text-xs">WhatsApp</a>}
+                  {isAdmin && (
+                    <details className="relative">
+                      <summary className="btn-secondary min-h-[32px] cursor-pointer list-none px-3 py-1 text-xs text-coral-ink [&::-webkit-details-marker]:hidden">Delete</summary>
+                      <form action={deleteProspect} className="absolute right-0 z-10 mt-2 grid w-60 gap-2 rounded-xl border border-line bg-white p-3 text-left shadow-lg">
+                        <input type="hidden" name="id" value={p.id} />
+                        <input type="hidden" name="back" value="list" />
+                        <p className="text-xs">Delete <span className="font-semibold">{p.business_name}</span> and all its follow-ups? This can&apos;t be undone.</p>
+                        <SubmitButton className="btn-danger min-h-[32px] px-3 py-1 text-xs" pendingText="Deleting…">Yes, delete</SubmitButton>
+                      </form>
+                    </details>
+                  )}
+                </span>
               </div>
             </li>
           );

@@ -88,7 +88,7 @@ export async function deleteProspect(form: FormData) {
   const { error } = await supabase.from('prospects').delete().eq('id', str(form, 'id'));
   if (error) throw new Error(error.message);
   revalidatePath('/prospects');
-  redirect('/prospects');
+  if (str(form, 'back') !== 'list') redirect('/prospects');
 }
 
 /** Admin: a won prospect becomes a billing client. */

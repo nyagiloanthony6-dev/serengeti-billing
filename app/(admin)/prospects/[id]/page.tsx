@@ -35,6 +35,16 @@ export default async function ProspectPage({ params, searchParams }: { params: {
         {tel && <a href={`tel:+${tel}`} className="btn-secondary">Call</a>}
         {tel && <a href={`https://wa.me/${tel}`} target="_blank" rel="noopener noreferrer" className="btn-secondary">WhatsApp</a>}
         {p.latitude != null && <a href={`https://www.google.com/maps?q=${p.latitude},${p.longitude}`} target="_blank" rel="noopener noreferrer" className="btn-secondary">Map</a>}
+        {isAdmin && (
+          <details className="relative">
+            <summary className="btn-secondary cursor-pointer list-none text-coral-ink [&::-webkit-details-marker]:hidden">Delete</summary>
+            <form action={deleteProspect} className="absolute right-0 z-10 mt-2 grid w-64 gap-2 rounded-xl border border-line bg-white p-3 text-left shadow-lg">
+              <input type="hidden" name="id" value={p.id} />
+              <p className="text-xs">Delete <span className="font-semibold">{p.business_name}</span> and all its follow-ups? This can&apos;t be undone.</p>
+              <SubmitButton className="btn-danger min-h-[32px] px-3 py-1 text-xs" pendingText="Deleting…">Yes, delete</SubmitButton>
+            </form>
+          </details>
+        )}
       </PageHeader>
 
       {searchParams.added && (
@@ -136,16 +146,6 @@ export default async function ProspectPage({ params, searchParams }: { params: {
             </section>
           )}
 
-          {isAdmin && (
-            <details className="text-right">
-              <summary className="cursor-pointer text-sm font-medium text-coral-ink">Delete prospect</summary>
-              <form action={deleteProspect} className="mt-2">
-                <input type="hidden" name="id" value={p.id} />
-                <p className="mb-2 text-xs text-muted">This removes the prospect and all its follow-ups.</p>
-                <SubmitButton className="btn-danger" pendingText="Deleting…">Yes, delete</SubmitButton>
-              </form>
-            </details>
-          )}
         </aside>
       </div>
     </>
