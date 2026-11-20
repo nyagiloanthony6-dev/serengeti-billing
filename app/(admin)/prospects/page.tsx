@@ -29,7 +29,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
   }
   if (searchParams.view === 'due') q = q.lte('next_followup', today).not('status', 'in', '(won,lost)');
 
-  const [{ data: rows }, { data: all }, { data: staff }, { data: products }] = await Promise.all([
+  const [{ data: rows }, { data: all }, { data: staff }, { data: pitched }] = await Promise.all([
     q,
     (() => {
       let a = supabase.from('prospects').select('status, visited_on, next_followup, sales_user_id');
@@ -38,8 +38,10 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
       return a;
     })(),
     isAdmin ? supabase.from('sales_staff').select('user_id, full_name').order('full_name') : Promise.resolve({ data: null }),
-    supabase.from('products').select('name').order('name'),
+    // Products that have actually been pitched (picked on at least one prospect).
+    supabase.from('prospects').select('products'),
   ]);
+  const productOptions = Array.from(new Set((pitched ?? []).flatMap((r: any) => r.products ?? []))).sort() as string[];
 
   const list = all ?? [];
   const open = (p: any) => p.status !== 'won' && p.status !== 'lost';
@@ -92,7 +94,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
         <label className="label" htmlFor="pproduct">Product
           <select id="pproduct" name="product" defaultValue={searchParams.product ?? ''} className="input">
             <option value="">All products</option>
-            {(products ?? []).map((x: any) => <option key={x.name} value={x.name}>{x.name}</option>)}
+            {productOptions.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
         {isAdmin && (
