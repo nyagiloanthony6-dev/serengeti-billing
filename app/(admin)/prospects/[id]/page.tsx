@@ -49,6 +49,17 @@ export default async function ProspectPage({ params, searchParams }: { params: {
               <div><dt className="text-xs text-muted">Phone</dt><dd className="num mt-0.5 font-medium">{p.phone || '—'}</dd></div>
               <div><dt className="text-xs text-muted">Location</dt><dd className="mt-0.5 font-medium">{p.location || '—'}{p.latitude != null && <span className="ml-2 text-xs font-normal text-teal-ink">GPS pinned</span>}</dd></div>
               <div><dt className="text-xs text-muted">Product pitched</dt><dd className="mt-1 flex flex-wrap gap-1">{(p.products ?? []).length ? p.products.map((n: string) => <span key={n} className="rounded-full bg-sunk px-2 py-0.5 text-xs font-medium">{n}</span>) : '—'}</dd></div>
+              {(p.route_origin || (p.route_destinations ?? []).length > 0) && (
+                <div className="sm:col-span-2"><dt className="text-xs text-muted">Shehena route</dt>
+                  <dd className="mt-1 flex flex-wrap items-center gap-1.5 text-sm">
+                    <span className="rounded-full bg-indigo-soft px-2.5 py-0.5 font-semibold text-indigo">{p.route_origin || 'Origin not set'}</span>
+                    <span aria-hidden="true" className="text-muted">→</span>
+                    {(p.route_destinations ?? []).length
+                      ? p.route_destinations.map((d: string) => <span key={d} className="rounded-full bg-sunk px-2.5 py-0.5 font-medium">{d}</span>)
+                      : <span className="text-muted">No destinations yet</span>}
+                  </dd>
+                </div>
+              )}
               <div><dt className="text-xs text-muted">Day visited</dt><dd className="mt-0.5 font-medium">{fmtDate(p.visited_on)}</dd></div>
               <div><dt className="text-xs text-muted">Next follow-up</dt><dd className="mt-0.5"><FollowupDate date={p.next_followup} today={today} closed={closed} /></dd></div>
               {isAdmin && <div><dt className="text-xs text-muted">Sales officer</dt><dd className="mt-0.5 font-medium">{p.sales_staff?.full_name ?? '—'}</dd></div>}

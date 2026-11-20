@@ -9,13 +9,20 @@ type P = {
   id?: string; business_name?: string; contact_person?: string | null; phone?: string | null; location?: string | null;
   latitude?: number | null; longitude?: number | null; products?: string[]; visited_on?: string; status?: string;
   next_followup?: string | null; notes?: string | null; sales_user_id?: string;
+  route_origin?: string | null; route_destinations?: string[] | null;
 };
+
+export const isShehena = (name: string) => /shehena/i.test(name);
 
 export function ProspectForm({ prospect, products, staff, today }: { prospect?: P; products: string[]; staff?: Staff[]; today: string }) {
   const p = prospect ?? {};
   const [lat, setLat] = useState(p.latitude?.toString() ?? '');
   const [lng, setLng] = useState(p.longitude?.toString() ?? '');
   const [gps, setGps] = useState<'idle' | 'busy' | 'err'>('idle');
+  const [picked, setPicked] = useState<string[]>(p.products ?? []);
+  const [dests, setDests] = useState<string[]>(p.route_destinations?.length ? p.route_destinations : ['']);
+  const showRoute = picked.some(isShehena);
+  const toggle = (name: string, on: boolean) => setPicked((xs) => (on ? [...xs, name] : xs.filter((x) => x !== name)));
   const id = (k: string) => `pf-${p.id?.slice(0, 6) ?? 'new'}-${k}`;
 
   function locate() {
@@ -71,12 +78,42 @@ export function ProspectForm({ prospect, products, staff, today }: { prospect?: 
         <div className="flex flex-wrap gap-2">
           {products.map((name) => (
             <label key={name} className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-sm has-[:checked]:border-indigo has-[:checked]:bg-indigo-soft has-[:checked]:text-indigo">
-              <input type="checkbox" name="products" value={name} defaultChecked={p.products?.includes(name)} className="accent-indigo" />
+              <input type="checkbox" name="products" value={name} checked={picked.includes(name)} onChange={(e) => toggle(name, e.target.checked)} className="accent-indigo" />
               {name}
             </label>
           ))}
         </div>
       </fieldset>
+
+      {showRoute && (
+        <fieldset className="grid gap-3 rounded-2xl border border-line bg-sunk/60 p-4">
+          <legend className="px-1 text-sm font-medium">Shehena route</legend>
+          <p className="-mt-1 text-xs text-muted">Where they load goods, and every place they deliver to.</p>
+          <label className="label" htmlFor={id('origin')}>From (origin)
+            <input id={id('origin')} name="route_origin" defaultValue={p.route_origin ?? ''} className="input" placeholder="e.g. Kariakoo, Dar es Salaam" />
+          </label>
+          <div className="grid gap-2">
+            <span className="text-sm font-medium">To (destinations)</span>
+            {dests.map((d, i) => (
+              <div key={i} className="flex gap-2">
+                <label className="sr-only" htmlFor={id(`dest${i}`)}>Destination {i + 1}</label>
+                <input
+                  id={id(`dest${i}`)}
+                  name="route_destinations"
+                  value={d}
+                  onChange={(e) => setDests((xs) => xs.map((x, j) => (j === i ? e.target.value : x)))}
+                  className="input"
+                  placeholder={['e.g. Dodoma', 'e.g. Mwanza', 'e.g. Mbeya', 'e.g. Arusha'][i % 4]}
+                />
+                {dests.length > 1 && (
+                  <button type="button" aria-label={`Remove destination ${i + 1}`} onClick={() => setDests((xs) => xs.filter((_, j) => j !== i))} className="rounded-lg px-3 text-muted hover:bg-coral-soft hover:text-coral-ink">✕</button>
+                )}
+              </div>
+            ))}
+            <div><button type="button" onClick={() => setDests((xs) => [...xs, ''])} className="btn-secondary min-h-[32px] px-3 py-1 text-xs">+ Add destination</button></div>
+          </div>
+        </fieldset>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <label className="label" htmlFor={id('visited')}>Day visited

@@ -16,6 +16,9 @@ const optNum = (f: FormData, k: string) => {
   return Number.isFinite(n) ? n : null;
 };
 
+const routeHint = (m: string) =>
+  /route_(origin|destinations)/.test(m) ? 'Run supabase/migrations/0003_prospect_routes.sql in Supabase first (adds the Shehena route fields).' : m;
+
 // ---------- Prospects ----------
 export async function saveProspect(form: FormData) {
   const s = await requireStaff();
@@ -35,20 +38,24 @@ export async function saveProspect(form: FormData) {
     notes: str(form, 'notes'),
     updated_at: new Date().toISOString(),
   };
+  // Route only applies when Shehena was pitched.
+  const shehena = (row.products as string[]).some((n) => /shehena/i.test(n));
+  row.route_origin = shehena ? str(form, 'route_origin') : '';
+  row.route_destinations = shehena ? form.getAll('route_destinations').map((v) => String(v).trim()).filter(Boolean) : [];
   if (!row.business_name) throw new Error('Business name is required');
   // Admins record a prospect on behalf of a sales officer; sales staff always own what they add.
   if (s.role === 'admin' && str(form, 'sales_user_id')) row.sales_user_id = str(form, 'sales_user_id');
 
   if (id) {
     const { error } = await supabase.from('prospects').update(row).eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(routeHint(error.message));
     revalidatePath(`/prospects/${id}`);
     revalidatePath('/prospects');
     redirect(`/prospects/${id}`);
   }
   if (s.role === 'admin' && !row.sales_user_id) throw new Error('Choose the sales officer for this prospect');
   const { data, error } = await supabase.from('prospects').insert(row).select('id').single();
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(routeHint(error.message));
   revalidatePath('/prospects');
   redirect(`/prospects/${data.id}?added=1`);
 }

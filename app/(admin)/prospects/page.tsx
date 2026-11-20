@@ -115,6 +115,9 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
                     {[p.contact_person, p.phone].filter(Boolean).join(' · ') || 'No contact saved'}
                   </p>
                   <p className="mt-0.5 text-sm text-muted">{p.location || 'No location'}</p>
+                  {(p.route_origin || (p.route_destinations ?? []).length > 0) && (
+                    <p className="mt-0.5 text-sm"><span className="text-muted">Route:</span> <span className="font-medium">{p.route_origin || '?'} → {(p.route_destinations ?? []).join(', ') || '?'}</span></p>
+                  )}
                 </div>
                 <ProspectBadge status={p.status} />
               </div>

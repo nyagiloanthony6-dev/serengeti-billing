@@ -59,6 +59,7 @@ The daily billing job in `vercel.json` turns on automatically after the first de
 2. In the app, open **Sales team** and add each sales officer with their name, phone, email and a starting password. Their account is created on the spot, and this needs `SUPABASE_SECRET_KEY` to be set in Vercel.
 3. Share the email and password with them. They sign in at the same address, for example `admin.serengetilabs.co.tz`, and land on **My prospects**. They can't see invoices, clients, payments or settings.
 4. If someone leaves, click **Turn off access**. Their prospects stay with you.
+5. Also run `supabase/migrations/0003_prospect_routes.sql` once. It adds the Shehena route fields (origin and destinations) to prospects.
 
 ### Optional: SMS and email
 Add these in Vercel › Settings › Environment Variables, then redeploy:
