@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { fmtDate, tzs, todayTZ, METHOD_LABEL } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
+import { StatTile } from '@/components/StatTile';
+import { Icon } from '@/components/Icon';
 import { SubmitButton } from '@/components/SubmitButton';
 import { runBillingNow } from '../actions';
 
@@ -31,20 +33,15 @@ export default async function Dashboard({ searchParams }: { searchParams: { bill
   const mrr = (subs ?? []).reduce((a, s) => a + Number(s.monthly_fee), 0);
   const activeClients = new Set((subs ?? []).map((s) => s.client_id)).size;
 
-  const stats = [
-    { label: 'Outstanding', value: tzs(outstanding), sub: `${open?.length ?? 0} unpaid invoices` },
-    { label: 'Overdue', value: tzs(overdue), sub: `${overdueList.length} past due date`, alert: overdue > 0 },
-    { label: 'Collected this month', value: tzs(collected), sub: `Billed ${tzs(billed)}` },
-    { label: 'Monthly recurring', value: tzs(mrr), sub: `${activeClients} paying clients` },
-  ];
+  const pct = billed > 0 ? Math.round((collected / billed) * 100) : 0;
 
   return (
     <>
-      <PageHeader kicker={fmtDate(today)} title="Dashboard">
+      <PageHeader kicker={fmtDate(today)} title="Habari, Tonny">
         <form action={runBillingNow}>
           <SubmitButton className="btn-secondary" pendingText="Running…">Run billing now</SubmitButton>
         </form>
-        <Link href="/invoices/new" className="btn-primary">New invoice</Link>
+        <Link href="/invoices/new" className="btn-primary"><Icon name="plus" className="h-4 w-4" />New invoice</Link>
       </PageHeader>
 
       {searchParams.billed !== undefined && (
@@ -54,13 +51,10 @@ export default async function Dashboard({ searchParams }: { searchParams: { bill
       )}
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className={`card p-5 ${s.alert ? 'border-coral/40' : ''}`}>
-            <p className="text-sm text-muted">{s.label}</p>
-            <p className={`num mt-1 text-2xl font-bold tracking-tight ${s.alert ? 'text-coral-ink' : ''}`}>{s.value}</p>
-            <p className="mt-1 text-xs text-muted">{s.sub}</p>
-          </div>
-        ))}
+        <StatTile label="Outstanding" icon="wallet" tone="indigo" value={tzs(outstanding)} sub={`${open?.length ?? 0} unpaid invoices`} href="/invoices?filter=unpaid" />
+        <StatTile label="Overdue" icon="alert" tone="coral" value={tzs(overdue)} sub={`${overdueList.length} past due date`} alert={overdue > 0} />
+        <StatTile label="Collected this month" icon="trending" tone="teal" value={tzs(collected)} progress={pct} sub={`${pct}% of ${tzs(billed)} billed`} />
+        <StatTile label="Monthly recurring" icon="repeat" tone="saffron" value={tzs(mrr)} sub={`${activeClients} paying clients`} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -75,9 +69,9 @@ export default async function Dashboard({ searchParams }: { searchParams: { bill
               <tbody>
                 {(open ?? []).slice(0, 8).map((i: any) => (
                   <tr key={i.id} className="hover:bg-canvas">
-                    <td className="td"><Link href={`/invoices/${i.id}`} className="font-medium text-indigo hover:underline">{i.number}</Link></td>
+                    <td className="td"><Link href={`/invoices/${i.id}`} className="whitespace-nowrap font-semibold text-indigo hover:underline">{i.number}</Link></td>
                     <td className="td">{i.clients?.name}</td>
-                    <td className="td"><span className="mr-2">{fmtDate(i.due_date)}</span><StatusBadge status={i.status} due={i.due_date} /></td>
+                    <td className="td"><span className="flex flex-wrap items-center gap-2 whitespace-nowrap">{fmtDate(i.due_date)}<StatusBadge status={i.status} due={i.due_date} /></span></td>
                     <td className="td num text-right font-medium">{tzs(Number(i.total) - Number(i.amount_paid))}</td>
                   </tr>
                 ))}
@@ -91,10 +85,11 @@ export default async function Dashboard({ searchParams }: { searchParams: { bill
           <h2 className="px-5 py-4 font-semibold">Latest payments</h2>
           <ul>
             {(recent ?? []).map((p: any) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 text-sm">
-                <div className="min-w-0">
+              <li key={p.id} className="flex items-center justify-between gap-3 border-t border-line/70 px-5 py-3.5 text-sm">
+                <span className="chip-icon bg-teal-soft text-teal-ink"><Icon name="check" className="h-4 w-4" /></span>
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{p.invoices?.clients?.name}</p>
-                  <p className="text-xs text-muted">{fmtDate(p.paid_at)} · {METHOD_LABEL[p.method] ?? p.method} · {p.invoices?.number}</p>
+                  <p className="truncate text-xs text-muted">{fmtDate(p.paid_at)} · {METHOD_LABEL[p.method] ?? p.method}</p>
                 </div>
                 <span className="num font-semibold text-teal-ink">{tzs(p.amount)}</span>
               </li>

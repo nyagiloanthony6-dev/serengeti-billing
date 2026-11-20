@@ -55,8 +55,13 @@ export default async function SalesTeamPage() {
               return (
                 <tr key={m.user_id} className={m.active ? '' : 'opacity-60'}>
                   <td className="td">
-                    <Link href={`/prospects?staff=${m.user_id}`} className="font-medium text-indigo hover:underline">{m.full_name}</Link>
-                    <p className="text-xs text-muted">{[m.phone, m.email].filter(Boolean).join(' · ')}</p>
+                    <div className="flex items-center gap-3">
+                      <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo to-[#3B3FC4] text-sm font-bold text-white">{m.full_name.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}</span>
+                      <div className="min-w-0">
+                        <Link href={`/prospects?staff=${m.user_id}`} className="font-semibold text-indigo hover:underline">{m.full_name}</Link>
+                        <p className="text-xs text-muted">{[m.phone, m.email].filter(Boolean).join(' · ')}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="td num text-right">{r.total}</td>
                   <td className="td num text-right">{r.month}</td>

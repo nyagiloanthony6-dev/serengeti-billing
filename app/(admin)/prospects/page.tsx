@@ -6,6 +6,8 @@ import { PROSPECT_STATUS, STATUS_ORDER, intlPhone } from '@/lib/prospects';
 import { PageHeader } from '@/components/PageHeader';
 import { ProspectBadge, FollowupDate } from '@/components/ProspectBadge';
 import { SubmitButton } from '@/components/SubmitButton';
+import { StatTile } from '@/components/StatTile';
+import { Icon } from '@/components/Icon';
 import { deleteProspect } from '../../sales-actions';
 
 export const dynamic = 'force-dynamic';
@@ -63,22 +65,14 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
   return (
     <>
       <PageHeader kicker={isAdmin ? 'Sales' : `Hi ${s.name.split(' ')[0]}`} title={isAdmin ? 'Prospects' : 'My prospects'}>
-        <Link href="/prospects/new" className="btn-primary">Add prospect</Link>
+        <Link href="/prospects/new" className="btn-primary"><Icon name="plus" className="h-4 w-4" />Add prospect</Link>
       </PageHeader>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {stats.map((t) => {
-          const inner = (
-            <>
-              <p className="text-xs text-muted">{t.label}</p>
-              <p className={`num mt-1 text-2xl font-bold ${t.alert && t.value > 0 ? 'text-coral-ink' : ''}`}>{t.value}</p>
-              <p className="text-xs text-muted">{t.sub}</p>
-            </>
-          );
-          return t.href
-            ? <Link key={t.label} href={t.href} className="card p-4 hover:border-ink">{inner}</Link>
-            : <div key={t.label} className="card p-4">{inner}</div>;
-        })}
+        {stats.map((t, i) => (
+          <StatTile key={t.label} label={t.label} value={t.value} sub={t.sub} href={t.href} alert={t.alert && t.value > 0}
+            icon={['target', 'map', 'calendar', 'check'][i]} tone={(['indigo', 'saffron', 'coral', 'teal'] as const)[i]} />
+        ))}
       </div>
 
       <form className="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:items-end">
@@ -120,9 +114,10 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
         {(rows ?? []).map((p: any) => {
           const tel = intlPhone(p.phone);
           return (
-            <li key={p.id} className="card p-4 hover:border-ink sm:p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+            <li key={p.id} className="card p-4 transition hover:border-indigo/30 hover:shadow-lg sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <span aria-hidden="true" className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl text-base font-bold ${PROSPECT_STATUS[p.status]?.cls ?? 'bg-sunk'}`}>{p.business_name.trim()[0]?.toUpperCase()}</span>
+                <div className="min-w-0 flex-1">
                   <Link href={`/prospects/${p.id}`} className="text-base font-semibold text-indigo hover:underline">{p.business_name}</Link>
                   <p className="mt-0.5 text-sm text-muted">
                     {[p.contact_person, p.phone].filter(Boolean).join(' · ') || 'No contact saved'}
@@ -134,7 +129,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: SP
                 </div>
                 <ProspectBadge status={p.status} />
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line/70 pt-3 text-xs">
                 {(p.products ?? []).length > 0 && (
                   <span className="flex flex-wrap gap-1">{p.products.map((n: string) => <Link key={n} href={qs({ product: n })} className={`rounded-full px-2 py-0.5 font-medium ${searchParams.product === n ? 'bg-indigo text-white' : 'bg-sunk hover:bg-indigo-soft hover:text-indigo'}`}>{n}</Link>)}</span>
                 )}
